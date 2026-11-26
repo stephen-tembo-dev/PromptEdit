@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+@import './theme.css';
+@import '../../node_modules/preline/variants.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../js/**/*.{ts,vue}';
+@source '../../node_modules/preline/dist/*.js';
+
+@plugin '@tailwindcss/forms';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+    /* Native controls, scrollbars and date pickers follow the theme. */
+    html {
+        color-scheme: light;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    /* Default ink, so text outside the ui components never falls back to browser black. */
+    body {
+        @apply text-neutral-800 antialiased dark:text-neutral-200;
+    }
+
+    ::selection {
+        @apply bg-primary-200 text-primary-950 dark:bg-primary-800 dark:text-primary-50;
+    }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+@theme {
+    --font-sans:
+        'Figtree', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    /* Emerald primary. Text and fills that carry white text use 700, the lightest shade that passes 4.5:1. */
+    --color-primary-50: var(--color-emerald-50);
+    --color-primary-100: var(--color-emerald-100);
+    --color-primary-200: var(--color-emerald-200);
+    --color-primary-300: var(--color-emerald-300);
+    --color-primary-400: var(--color-emerald-400);
+    --color-primary-500: var(--color-emerald-500);
+    --color-primary-600: var(--color-emerald-600);
+    --color-primary-700: var(--color-emerald-700);
+    --color-primary-800: var(--color-emerald-800);
+    --color-primary-900: var(--color-emerald-900);
+    --color-primary-950: var(--color-emerald-950);
+}
+
+/* The repeating circuit pattern behind the guest (auth) pages. */
+.login-background-container {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g stroke="rgba(5, 150, 105, 0.05)" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"><path d="M20 20h20v20h20"/><path d="M80 80h20v20"/><path d="M60 40v20h-20v20"/><path d="M100 20h-20v40h20"/><path d="M0 60h20v-20" opacity="0.5"/><path d="M60 120v-20h20" opacity="0.5"/><circle cx="60" cy="40" r="2.5" fill="rgba(5, 150, 105, 0.05)"/><circle cx="80" cy="80" r="2.5" fill="rgba(5, 150, 105, 0.05)"/><circle cx="20" cy="20" r="2.5" fill="rgba(5, 150, 105, 0.05)"/><circle cx="40" cy="80" r="2.5" fill="rgba(5, 150, 105, 0.05)"/><circle cx="80" cy="20" r="2.5" fill="rgba(5, 150, 105, 0.05)"/><circle cx="100" cy="60" r="2.5" fill="rgba(5, 150, 105, 0.05)"/></g></svg>');
+    background-repeat: repeat;
+    background-position: center;
+}
