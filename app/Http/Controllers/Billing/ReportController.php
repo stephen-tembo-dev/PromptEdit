@@ -19,8 +19,6 @@ use Inertia\Response;
  */
 class ReportController extends Controller
 {
-    private const PER_PAGE = 25;
-
     public function __construct(
         private TransactionRepositoryInterface $transactions,
         private CreditPurchaseRepositoryInterface $purchases,
@@ -47,7 +45,7 @@ class ReportController extends Controller
                 'held' => NanoDollars::format($boughtNano - $chargedNano - $balanceNano),
                 'balance' => NanoDollars::format($balanceNano),
             ],
-            'transactions' => TransactionResource::collection($this->transactions->paginateForUser($user, $request->kinds(), self::PER_PAGE)),
+            'transactions' => TransactionResource::collection($this->transactions->paginateForUser($user, $request->kinds(), $this->perPage($request))),
             'filter' => $request->filter() ?? 'all',
         ]);
     }

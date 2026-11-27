@@ -75,6 +75,53 @@ class GenerationControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_users_can_download_their_image_named_after_the_prompt(): void
+    {
+        Http::preventStrayRequests();
+        $generation = Generation::factory()->succeeded()->create(['prompt' => 'A fox in the snow, watercolour']);
+        Http::fake([$generation->image_url => Http::response('png-bytes', 200, ['Content-Type' => 'image/png'])]);
+
+        $response = $this->actingAs($generation->user)->get("/generations/{$generation->uuid}/download");
+
+        $response->assertOk()
+            ->assertDownload('a-fox-in-the-snow-watercolour.png')
+            ->assertHeader('Content-Type', 'image/png');
+        $this->assertSame('png-bytes', $response->streamedContent());
+    }
+
+    public function test_users_cannot_download_someone_elses_image(): void
+    {
+        Http::preventStrayRequests();
+        $generation = Generation::factory()->succeeded()->create();
+
+        $this->actingAs(User::factory()->create())
+            ->get("/generations/{$generation->uuid}/download")
+            ->assertForbidden();
+    }
+
+    public function test_an_expired_image_cannot_be_downloaded(): void
+    {
+        Http::preventStrayRequests();
+        $generation = Generation::factory()->succeeded()->create(['image_url_expires_at' => now()->subMinute()]);
+
+        $this->actingAs($generation->user)
+            ->get("/generations/{$generation->uuid}/download")
+            ->assertRedirect("/generations/{$generation->uuid}")
+            ->assertSessionHas('notify.type', 'error');
+    }
+
+    public function test_a_failed_fetch_from_pixelforge_sends_the_user_back_with_an_error(): void
+    {
+        Http::preventStrayRequests();
+        $generation = Generation::factory()->succeeded()->create();
+        Http::fake([$generation->image_url => Http::response('Forbidden', 403)]);
+
+        $this->actingAs($generation->user)
+            ->get("/generations/{$generation->uuid}/download")
+            ->assertRedirect("/generations/{$generation->uuid}")
+            ->assertSessionHas('notify.content', 'The image could not be fetched from Pixelforge. Please try again in a moment.');
+    }
+
     public function test_submitting_holds_the_maximum_and_queues_the_generation(): void
     {
         Queue::fake();

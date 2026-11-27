@@ -83,6 +83,7 @@ export { default as TableRow } from './table/TableRow.vue';
 export { default as TableHeader } from './table/TableHeader.vue';
 export { default as TableCell } from './table/TableCell.vue';
 export { default as TableFooter } from './table/TableFooter.vue';
+export { default as Pagination } from './pagination/Pagination.vue';
 export { default as PageHeader } from './page-header/PageHeader.vue';
 export { default as Chart } from './chart/Chart.vue';
 

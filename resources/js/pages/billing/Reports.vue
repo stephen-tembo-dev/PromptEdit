@@ -3,11 +3,11 @@ import { router, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import {
     Badge,
-    Button,
     Card,
     Empty,
     EmptyContents,
     PageHeader,
+    Pagination,
     Segmented,
     StatCard,
     StatCardGroup,
@@ -21,6 +21,7 @@ import {
     TextLink,
     type UiColor,
 } from '@/components/ui';
+import { DEFAULT_PER_PAGE, useServerPagination } from '@/composables/usePagination';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Transaction, TransactionKind } from '@/types/billing';
 import type { Paginated } from '@/types/generations';
@@ -42,8 +43,18 @@ const filters = [
 
 const selected = ref(props.filter);
 
+const goTo = useServerPagination(['transactions']);
+
+// Back to page 1, but keep the page size.
 watch(selected, (value) =>
-    router.get('/reports', value === 'all' ? {} : { type: value }, { preserveState: true, preserveScroll: true, replace: true, only: ['transactions', 'filter'] }),
+    router.get(
+        '/reports',
+        {
+            type: value === 'all' ? undefined : value,
+            per_page: props.transactions.meta.per_page === DEFAULT_PER_PAGE ? undefined : props.transactions.meta.per_page,
+        },
+        { preserveState: true, preserveScroll: true, replace: true, only: ['transactions', 'filter'] },
+    ),
 );
 
 /** Each kind keeps the badge meaning used elsewhere: amber is pending, sky is information. */
@@ -111,25 +122,19 @@ const formatDate = (iso: string) => new Date(iso).toLocaleString(undefined, { da
                     </TableBody>
                 </Table>
 
+                <Pagination
+                    :page="transactions.meta.current_page"
+                    :per-page="transactions.meta.per_page"
+                    :total="transactions.meta.total"
+                    @update:page="goTo({ page: $event })"
+                    @update:per-page="goTo({ per_page: $event })"
+                />
+
                 <Text class="text-xs text-neutral-500! dark:text-neutral-400!">
                     When you generate an image, the most it can cost is held. Once it finishes, the hold is returned and the real price is charged, or nothing if it
                     failed.
                 </Text>
             </Card>
-
-            <nav v-if="transactions.meta.last_page > 1" class="flex items-center justify-between gap-4" aria-label="Pages">
-                <Text class="text-sm text-neutral-500! tabular-nums dark:text-neutral-400!">
-                    {{ transactions.meta.from }}–{{ transactions.meta.to }} of {{ transactions.meta.total }}
-                </Text>
-                <div class="flex gap-2">
-                    <Button :href="transactions.links.prev ?? undefined" :disabled="!transactions.links.prev" variant="outline" color="neutral" size="sm" icon="caret-left">
-                        Newer
-                    </Button>
-                    <Button :href="transactions.links.next ?? undefined" :disabled="!transactions.links.next" variant="outline" color="neutral" size="sm" icon-after="caret-right">
-                        Older
-                    </Button>
-                </div>
-            </nav>
         </div>
     </AppLayout>
 </template>

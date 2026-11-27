@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:'.PermissionName::ViewHistory->value)->group(function () {
         Route::get('/generations', [GenerationController::class, 'index'])->name('generations.index');
         Route::get('/generations/{generation}', [GenerationController::class, 'show'])->name('generations.show');
+        Route::get('/generations/{generation}/download', [GenerationController::class, 'download'])->name('generations.download');
     });
 
     // Billing

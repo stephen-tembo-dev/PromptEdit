@@ -5,7 +5,7 @@ namespace App\Repositories\Billing;
 use App\Models\Billing\CreditPurchase;
 use App\Models\User\User;
 use App\Repositories\Contracts\Billing\CreditPurchaseRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
  * The database queries for credit purchases.
@@ -34,14 +34,14 @@ class CreditPurchaseRepository implements CreditPurchaseRepositoryInterface
     }
 
     /**
-     * The user's latest purchases, newest first.
+     * One page of the user's purchases, newest first.
      */
-    public function latestForUser(User $user, int $limit): Collection
+    public function paginateForUser(User $user, int $perPage): LengthAwarePaginator
     {
         return $user->creditPurchases()
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->limit($limit)
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
     }
 }

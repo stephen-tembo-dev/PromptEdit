@@ -26,8 +26,26 @@ class CreditControllerTest extends TestCase
                 ->component('billing/Credits')
                 ->where('balance', '$10.0000')
                 ->has('presets', 3)
-                ->has('purchases', 1)
-                ->where('purchases.0.amount', '$10.00'));
+                ->has('purchases.data', 1)
+                ->where('purchases.data.0.amount', '$10.00'));
+    }
+
+    public function test_purchases_are_paged_ten_at_a_time_unless_another_offered_size_is_chosen(): void
+    {
+        $user = User::factory()->create();
+        CreditPurchase::factory()->for($user)->count(30)->create();
+
+        $this->actingAs($user)
+            ->get('/credits')
+            ->assertInertia(fn (Assert $page) => $page->has('purchases.data', 10)->where('purchases.meta.total', 30));
+
+        $this->actingAs($user)
+            ->get('/credits?per_page=25')
+            ->assertInertia(fn (Assert $page) => $page->has('purchases.data', 25));
+
+        $this->actingAs($user)
+            ->get('/credits?per_page=1000')
+            ->assertInertia(fn (Assert $page) => $page->has('purchases.data', 10));
     }
 
     public function test_buying_credits_adds_them_once_per_idempotency_key(): void

@@ -27,8 +27,6 @@ use Inertia\Response;
  */
 class UserController extends Controller
 {
-    private const PER_PAGE = 20;
-
     public function __construct(
         private UserService $userService,
         private UserRepositoryInterface $users,
@@ -43,7 +41,7 @@ class UserController extends Controller
         $search = trim((string) $request->query('search', '')) ?: null;
 
         return Inertia::render('users/Index', [
-            'users' => UserResource::collection($this->users->paginateWithRoles($search, self::PER_PAGE)),
+            'users' => UserResource::collection($this->users->paginateWithRoles($search, $this->perPage($request))),
             'search' => $search ?? '',
         ]);
     }

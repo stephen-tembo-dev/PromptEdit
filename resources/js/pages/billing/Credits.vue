@@ -9,6 +9,7 @@ import {
     EmptyContents,
     Heading,
     PageHeader,
+    Pagination,
     Table,
     TableBody,
     TableCell,
@@ -17,13 +18,17 @@ import {
     TableRow,
     Text,
 } from '@/components/ui';
+import { useServerPagination } from '@/composables/usePagination';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { CreditPreset, CreditPurchase } from '@/types/billing';
+import type { Paginated } from '@/types/generations';
 
 defineProps<{
     presets: CreditPreset[];
-    purchases: CreditPurchase[];
+    purchases: Paginated<CreditPurchase>;
 }>();
+
+const goTo = useServerPagination(['purchases']);
 
 /*
  * Each purchase carries a fresh idempotency key, so a double-click or a resent form
@@ -82,7 +87,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleString();
             <Card size="full" class="space-y-4 lg:col-span-2">
                 <Heading size="sm">Purchase history</Heading>
 
-                <Empty v-if="purchases.length === 0">
+                <Empty v-if="purchases.data.length === 0">
                     <EmptyContents>
                         <Text class="text-neutral-500! dark:text-neutral-400!">No purchases yet.</Text>
                     </EmptyContents>
@@ -96,12 +101,20 @@ const formatDate = (iso: string) => new Date(iso).toLocaleString();
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        <TableRow v-for="purchase in purchases" :key="purchase.id">
+                        <TableRow v-for="purchase in purchases.data" :key="purchase.id">
                             <TableCell>{{ formatDate(purchase.created_at) }}</TableCell>
                             <TableCell align="end" class="tabular-nums">{{ purchase.amount }}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
+
+                <Pagination
+                    :page="purchases.meta.current_page"
+                    :per-page="purchases.meta.per_page"
+                    :total="purchases.meta.total"
+                    @update:page="goTo({ page: $event })"
+                    @update:per-page="goTo({ per_page: $event })"
+                />
             </Card>
         </div>
     </AppLayout>

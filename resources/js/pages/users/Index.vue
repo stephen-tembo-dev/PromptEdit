@@ -13,6 +13,7 @@ import {
     Icon,
     Input,
     PageHeader,
+    Pagination,
     Table,
     TableBody,
     TableCell,
@@ -21,6 +22,7 @@ import {
     TableRow,
     Text,
 } from '@/components/ui';
+import { DEFAULT_PER_PAGE, useServerPagination } from '@/composables/usePagination';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Paginated } from '@/types/generations';
 import type { ManagedUser } from '@/types/users';
@@ -32,6 +34,8 @@ const props = defineProps<{
 
 const page = usePage();
 
+const goTo = useServerPagination(['users']);
+
 /* Searching reloads the list as you type, debounced so each keystroke isn't a request. */
 const query = ref(props.search);
 let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -39,7 +43,10 @@ let debounce: ReturnType<typeof setTimeout> | undefined;
 watch(query, (value) => {
     clearTimeout(debounce);
     debounce = setTimeout(() => {
-        router.get('/admin/users', value.trim() ? { search: value.trim() } : {}, { preserveState: true, preserveScroll: true, replace: true, only: ['users', 'search'] });
+        // Back to page 1, but keep the page size.
+        const perPage = props.users.meta.per_page === DEFAULT_PER_PAGE ? undefined : props.users.meta.per_page;
+
+        router.get('/admin/users', { search: value.trim() || undefined, per_page: perPage }, { preserveState: true, preserveScroll: true, replace: true, only: ['users', 'search'] });
     }, 300);
 });
 
@@ -114,15 +121,15 @@ const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateStri
                         </TableRow>
                     </TableBody>
                 </Table>
-            </Card>
 
-            <nav v-if="users.meta.last_page > 1" class="flex items-center justify-between gap-4" aria-label="Pages">
-                <Text class="text-sm text-neutral-500! tabular-nums dark:text-neutral-400!">{{ users.meta.from }}–{{ users.meta.to }} of {{ users.meta.total }}</Text>
-                <div class="flex gap-2">
-                    <Button :href="users.links.prev ?? undefined" :disabled="!users.links.prev" variant="outline" color="neutral" size="sm" icon="caret-left">Previous</Button>
-                    <Button :href="users.links.next ?? undefined" :disabled="!users.links.next" variant="outline" color="neutral" size="sm" icon-after="caret-right">Next</Button>
-                </div>
-            </nav>
+                <Pagination
+                    :page="users.meta.current_page"
+                    :per-page="users.meta.per_page"
+                    :total="users.meta.total"
+                    @update:page="goTo({ page: $event })"
+                    @update:per-page="goTo({ per_page: $event })"
+                />
+            </Card>
         </div>
     </AppLayout>
 </template>

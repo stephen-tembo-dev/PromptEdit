@@ -4,7 +4,7 @@ namespace App\Repositories\Contracts\Billing;
 
 use App\Models\Billing\CreditPurchase;
 use App\Models\User\User;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
  * The list of database jobs for credit purchases.
@@ -23,9 +23,9 @@ interface CreditPurchaseRepositoryInterface
     public function totalForUser(User $user): int;
 
     /**
-     * The user's latest purchases, newest first.
+     * One page of the user's purchases, newest first.
      *
-     * @return Collection<int, CreditPurchase>
+     * @return LengthAwarePaginator<int, CreditPurchase>
      */
-    public function latestForUser(User $user, int $limit): Collection;
+    public function paginateForUser(User $user, int $perPage): LengthAwarePaginator;
 }

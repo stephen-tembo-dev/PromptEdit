@@ -18,15 +18,13 @@ use Inertia\Response;
  */
 class CreditController extends Controller
 {
-    private const RECENT_PURCHASES = 20;
-
     public function __construct(
         private BalanceService $balance,
         private CreditPurchaseRepositoryInterface $purchases,
     ) {}
 
     /**
-     * Show the page with the amounts to choose from and the user's latest purchases.
+     * The buy options and a page of the user's purchases.
      */
     public function index(Request $request): Response
     {
@@ -36,8 +34,8 @@ class CreditController extends Controller
                 'label' => NanoDollars::format($dollars * NanoDollars::PER_DOLLAR, 2),
             ], PurchaseCreditsRequest::PRESET_DOLLARS),
             'purchases' => CreditPurchaseResource::collection(
-                $this->purchases->latestForUser($request->user(), self::RECENT_PURCHASES),
-            )->resolve(),
+                $this->purchases->paginateForUser($request->user(), $this->perPage($request)),
+            ),
         ]);
     }
 

@@ -12,13 +12,16 @@ use App\Jobs\Generations\DispatchWaitingGenerations;
 use App\Models\Generations\Generation;
 use App\Repositories\Contracts\Generations\GenerationRepositoryInterface;
 use App\Services\Generations\GenerationService;
+use App\Services\Pixelforge\PixelforgeService;
 use App\Support\Exceptions\Billing\InsufficientCreditsException;
 use App\Support\Exceptions\Pixelforge\PixelforgeException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The pages for making pictures and seeing your history.
@@ -30,6 +33,7 @@ class GenerationController extends Controller
     public function __construct(
         private GenerationService $generationService,
         private GenerationRepositoryInterface $generations,
+        private PixelforgeService $pixelforge,
     ) {}
 
     /**
@@ -110,5 +114,37 @@ class GenerationController extends Controller
         return Inertia::render('generations/Show', [
             'generation' => (new GenerationResource($generation->load(['referenceImages', 'ledgerEntries'])))->resolve(),
         ]);
+    }
+
+    /**
+     * Download the image. We proxy it because browsers won't force a download
+     * for a link on another domain.
+     */
+    public function download(Generation $generation): StreamedResponse|RedirectResponse
+    {
+        Gate::authorize('view', $generation);
+
+        if ($generation->image_url === null || ($generation->image_url_expires_at?->isPast() ?? false)) {
+            return to_route('generations.show', $generation)->with('notify', [
+                'type' => 'error',
+                'content' => 'This image is no longer available to download. Pixelforge keeps images for 24 hours.',
+            ]);
+        }
+
+        try {
+            $image = $this->pixelforge->downloadImage($generation->image_url);
+        } catch (PixelforgeException) {
+            return to_route('generations.show', $generation)->with('notify', [
+                'type' => 'error',
+                'content' => 'The image could not be fetched from Pixelforge. Please try again in a moment.',
+            ]);
+        }
+
+        // Use the prompt as the file name so it's easy to recognise.
+        $filename = (Str::slug(Str::limit($generation->prompt, 60, '')) ?: 'pixelforge-image').'.png';
+
+        return response()->streamDownload(function () use ($image): void {
+            echo $image;
+        }, $filename, ['Content-Type' => 'image/png']);
     }
 }

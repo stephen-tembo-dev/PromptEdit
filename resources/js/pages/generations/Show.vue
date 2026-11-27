@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import GenerationPreview from '@/components/generations/GenerationPreview.vue';
 import GenerationStatusBadge from '@/components/generations/GenerationStatusBadge.vue';
-import { Alert, Card, DetailList, DetailListItem, Heading, PageHeader, Text, TextLink } from '@/components/ui';
+import { Alert, Button, Card, DetailList, DetailListItem, Heading, PageHeader, Text, TextLink } from '@/components/ui';
 import { useLiveGenerations } from '@/composables/generations/useLiveGenerations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Generation } from '@/types/generations';
@@ -32,6 +32,10 @@ const tokens = computed(() => {
         <PageHeader title="Generation" back="/generations">
             <template #badge>
                 <GenerationStatusBadge :generation="generation" />
+            </template>
+            <template v-if="generation.image_url" #actions>
+                <!-- external: a normal link, since the response is a file, not a page. -->
+                <Button :href="`/generations/${generation.id}/download`" external icon="download-simple">Download</Button>
             </template>
         </PageHeader>
 

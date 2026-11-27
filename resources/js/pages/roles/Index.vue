@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { Badge, Button, Card, PageHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Text } from '@/components/ui';
+import { Badge, Button, Card, PageHeader, Pagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Text } from '@/components/ui';
+import { useClientPagination } from '@/composables/usePagination';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { PermissionOption, Role } from '@/types/users';
 
@@ -10,6 +11,8 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
+
+const { page: rolePage, perPage: rolesPerPage, total: roleCount, rows: visibleRoles } = useClientPagination(() => props.roles);
 
 const labelFor = (value: string) => props.permissions.find((permission) => permission.value === value)?.label ?? value;
 </script>
@@ -34,7 +37,7 @@ const labelFor = (value: string) => props.permissions.find((permission) => permi
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    <TableRow v-for="role in roles" :key="role.id">
+                    <TableRow v-for="role in visibleRoles" :key="role.id">
                         <TableCell>
                             <span class="flex flex-wrap items-center gap-2 font-medium">
                                 {{ role.name }}
@@ -57,6 +60,8 @@ const labelFor = (value: string) => props.permissions.find((permission) => permi
                     </TableRow>
                 </TableBody>
             </Table>
+
+            <Pagination v-model:page="rolePage" v-model:per-page="rolesPerPage" :total="roleCount" />
 
             <Text v-if="roles.some((role) => role.is_built_in)" class="text-xs text-neutral-500! dark:text-neutral-400!">
                 Built-in roles are defined in the code and reset on every deploy, so they can be given to users but not edited here.

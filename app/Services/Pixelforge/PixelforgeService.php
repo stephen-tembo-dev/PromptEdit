@@ -130,6 +130,17 @@ class PixelforgeService
     }
 
     /**
+     * Fetch the image file. The URL is already signed, so no API key is needed.
+     * Images can be a few MB, so the timeout is longer than usual.
+     *
+     * @throws PixelforgeRequestException|PixelforgeConnectionException
+     */
+    public function downloadImage(string $imageUrl): string
+    {
+        return $this->send(fn (): Response => Http::connectTimeout(5)->timeout(30)->get($imageUrl))->body();
+    }
+
+    /**
      * A basic request to Pixelforge, with JSON and timeouts set.
      */
     private function request(): PendingRequest

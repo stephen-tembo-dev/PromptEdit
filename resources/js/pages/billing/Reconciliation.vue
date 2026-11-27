@@ -15,6 +15,7 @@ import {
     Input,
     Label,
     PageHeader,
+    Pagination,
     StatCard,
     StatCardGroup,
     Table,
@@ -25,6 +26,7 @@ import {
     TableRow,
     Text,
 } from '@/components/ui';
+import { useClientPagination } from '@/composables/usePagination';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { ReconciliationReport } from '@/types/billing';
 
@@ -39,6 +41,9 @@ const form = useForm({
 });
 
 const apply = () => form.get('/admin/report', { preserveScroll: true });
+
+const { page: dayPage, perPage: daysPerPage, total: dayCount, rows: visibleDays } = useClientPagination(() => props.report.days);
+const { page: userPage, perPage: usersPerPage, total: userCount, rows: visibleUsers } = useClientPagination(() => props.report.users);
 
 const formatDay = (date: string) =>
     new Date(`${date}T00:00:00Z`).toLocaleDateString(undefined, { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -124,7 +129,7 @@ const formatDay = (date: string) =>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow v-for="day in report.days" :key="day.date">
+                            <TableRow v-for="day in visibleDays" :key="day.date">
                                 <TableCell class="whitespace-nowrap">{{ formatDay(day.date) }}</TableCell>
                                 <TableCell><ReconciliationStatusBadge :status="day.status" /></TableCell>
                                 <TableCell align="end" class="whitespace-nowrap tabular-nums">
@@ -145,6 +150,8 @@ const formatDay = (date: string) =>
                         </TableBody>
                     </Table>
                 </div>
+
+                <Pagination v-model:page="dayPage" v-model:per-page="daysPerPage" :total="dayCount" label="Day pages" />
 
                 <Text v-if="report.days.some((day) => day.pixelforge_generations !== null && day.pixelforge_generations !== day.generations)" class="text-xs text-neutral-500! dark:text-neutral-400!">
                     Where the counts differ, generations are shown as ours / Pixelforge's.
@@ -175,7 +182,7 @@ const formatDay = (date: string) =>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            <TableRow v-for="user in report.users" :key="user.id">
+                            <TableRow v-for="user in visibleUsers" :key="user.id">
                                 <TableCell>
                                     <span class="block font-medium">{{ user.name }}</span>
                                     <span class="block text-xs text-neutral-500 dark:text-neutral-400">{{ user.email }}</span>
@@ -188,6 +195,8 @@ const formatDay = (date: string) =>
                         </TableBody>
                     </Table>
                 </div>
+
+                <Pagination v-model:page="userPage" v-model:per-page="usersPerPage" :total="userCount" label="User pages" />
             </Card>
         </div>
     </AppLayout>
