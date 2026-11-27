@@ -20,7 +20,7 @@ use Inertia\Response;
  */
 class DashboardController extends Controller
 {
-    private const RECENT = 3;
+    private const PER_PAGE = 6;
 
     public function __construct(
         private GenerationRepositoryInterface $generations,
@@ -38,7 +38,10 @@ class DashboardController extends Controller
 
         $counts = $this->generations->countsForUser($user, $monthStart);
         $spentNano = $this->ledger->chargedForUser($user);
-        $recent = $this->generations->latestForUser($user, self::RECENT);
+        $recent = $this->generations->paginateForUser($user, self::PER_PAGE);
+
+        // Do this before the resource wraps the models.
+        $hasUnfinished = collect($recent->items())->contains(fn (Generation $generation): bool => ! $generation->isFinished()) || $counts['unfinished'] > 0;
 
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -50,8 +53,8 @@ class DashboardController extends Controller
                 'average_cost' => $counts['succeeded'] > 0 ? NanoDollars::format(intdiv($spentNano, $counts['succeeded'])) : null,
                 'unfinished' => $counts['unfinished'],
             ],
-            'recent' => GenerationResource::collection($recent)->resolve(),
-            'hasUnfinished' => $recent->contains(fn (Generation $generation): bool => ! $generation->isFinished()) || $counts['unfinished'] > 0,
+            'recent' => Inertia::scroll(GenerationResource::collection($recent))->matchOn('data.id'),
+            'hasUnfinished' => $hasUnfinished,
         ]);
     }
 }

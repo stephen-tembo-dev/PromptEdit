@@ -43,7 +43,7 @@ class DashboardControllerTest extends TestCase
                 ->where('stats.average_cost', '$0.0750')
                 ->where('stats.unfinished', 1)
                 ->where('hasUnfinished', true)
-                ->has('recent', 3));
+                ->has('recent.data', 4));
     }
 
     public function test_a_new_user_sees_zeros_and_no_average(): void
@@ -55,7 +55,7 @@ class DashboardControllerTest extends TestCase
                 ->where('stats.spent', '$0.0000')
                 ->where('stats.average_cost', null)
                 ->where('hasUnfinished', false)
-                ->has('recent', 0));
+                ->has('recent.data', 0));
     }
 
     public function test_a_flashed_notify_message_is_shared_with_the_next_page(): void

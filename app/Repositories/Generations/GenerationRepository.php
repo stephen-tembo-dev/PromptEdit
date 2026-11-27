@@ -166,21 +166,6 @@ class GenerationRepository implements GenerationRepositoryInterface
      * How many pictures are using a slot right now.
      */
     /**
-     * The user's newest pictures, with what GenerationResource needs.
-     *
-     * @return Collection<int, Generation>
-     */
-    public function latestForUser(User $user, int $limit): Collection
-    {
-        return $user->generations()
-            ->with(['referenceImages', 'ledgerEntries'])
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->get();
-    }
-
-    /**
      * The dashboard counts in one query.
      *
      * @return array{succeeded: int, succeeded_since: int, unfinished: int}

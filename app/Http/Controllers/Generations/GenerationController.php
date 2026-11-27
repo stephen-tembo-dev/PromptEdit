@@ -37,8 +37,8 @@ class GenerationController extends Controller
     ) {}
 
     /**
-     * The history page. While any picture on it is unfinished, the page keeps
-     * refreshing itself.
+     * The history page. More load as you scroll. Matching on id stops a live
+     * refresh from adding the same card twice.
      */
     public function index(Request $request): Response
     {
@@ -49,7 +49,7 @@ class GenerationController extends Controller
         $hasUnfinished = collect($page->items())->contains(fn (Generation $generation): bool => ! $generation->isFinished());
 
         return Inertia::render('generations/Index', [
-            'generations' => GenerationResource::collection($page),
+            'generations' => Inertia::scroll(GenerationResource::collection($page))->matchOn('data.id'),
             'hasUnfinished' => $hasUnfinished,
         ]);
     }

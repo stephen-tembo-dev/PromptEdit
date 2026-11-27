@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import GenerationCard from '@/components/generations/GenerationCard.vue';
+import GenerationFeed from '@/components/generations/GenerationFeed.vue';
 import { Button, Card, Empty, EmptyContents, EmptyMedia, Heading, Icon, PageHeader, StatCard, StatCardGroup, Text } from '@/components/ui';
 import { useLiveGenerations } from '@/composables/generations/useLiveGenerations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { Generation } from '@/types/generations';
+import type { Generation, Paginated } from '@/types/generations';
 
 const props = defineProps<{
     stats: {
@@ -17,13 +17,13 @@ const props = defineProps<{
         average_cost: string | null;
         unfinished: number;
     };
-    recent: Generation[];
+    recent: Paginated<Generation>;
     hasUnfinished: boolean;
 }>();
 
 const page = usePage();
 
-useLiveGenerations(() => props.hasUnfinished, ['stats', 'recent', 'hasUnfinished']);
+useLiveGenerations(() => props.hasUnfinished, ['stats', 'recent', 'hasUnfinished'], true);
 
 const spentDescription = computed(() =>
     props.stats.average_cost ? `${props.stats.spent_this_month} this month · about ${props.stats.average_cost} each` : `${props.stats.spent_this_month} this month`,
@@ -56,12 +56,10 @@ const spentDescription = computed(() =>
             <section v-if="page.props.auth.can.viewHistory" class="space-y-4" aria-labelledby="recent-heading">
                 <div class="flex items-center justify-between gap-4">
                     <Heading id="recent-heading" size="sm">Latest images</Heading>
-                    <Button v-if="recent.length" href="/generations" variant="ghost" color="neutral" size="xs" icon-after="caret-right">View all</Button>
+                    <Button v-if="recent.data.length" href="/generations" variant="ghost" color="neutral" size="xs" icon-after="caret-right">View all</Button>
                 </div>
 
-                <div v-if="recent.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    <GenerationCard v-for="generation in recent" :key="generation.id" :generation="generation" />
-                </div>
+                <GenerationFeed v-if="recent.data.length" data="recent" :generations="recent.data" />
 
                 <Card v-else size="full">
                     <Empty>

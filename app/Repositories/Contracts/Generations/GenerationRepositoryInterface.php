@@ -81,13 +81,6 @@ interface GenerationRepositoryInterface
     public function paginateForUser(User $user, int $perPage = 20): LengthAwarePaginator;
 
     /**
-     * The user's newest pictures, ready for GenerationResource.
-     *
-     * @return Collection<int, Generation>
-     */
-    public function latestForUser(User $user, int $limit): Collection;
-
-    /**
      * The counts on the user's dashboard: finished pictures in total and since
      * $since, and how many are still waiting or being made.
      *

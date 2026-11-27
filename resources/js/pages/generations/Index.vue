@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import GenerationCard from '@/components/generations/GenerationCard.vue';
+import GenerationFeed from '@/components/generations/GenerationFeed.vue';
 import { Button, Card, Empty, EmptyContents, EmptyMedia, Heading, Icon, PageHeader, Text } from '@/components/ui';
 import { useLiveGenerations } from '@/composables/generations/useLiveGenerations';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -13,7 +13,7 @@ const props = defineProps<{
 
 const page = usePage();
 
-useLiveGenerations(() => props.hasUnfinished, ['generations', 'hasUnfinished']);
+useLiveGenerations(() => props.hasUnfinished, ['generations', 'hasUnfinished'], true);
 </script>
 
 <template>
@@ -39,20 +39,6 @@ useLiveGenerations(() => props.hasUnfinished, ['generations', 'hasUnfinished']);
             </Empty>
         </Card>
 
-        <div v-else class="space-y-6">
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <GenerationCard v-for="generation in generations.data" :key="generation.id" :generation="generation" />
-            </div>
-
-            <nav v-if="generations.meta.last_page > 1" class="flex items-center justify-between gap-4" aria-label="Pages">
-                <Text class="text-sm text-neutral-500! tabular-nums dark:text-neutral-400!">
-                    {{ generations.meta.from }}–{{ generations.meta.to }} of {{ generations.meta.total }}
-                </Text>
-                <div class="flex gap-2">
-                    <Button :href="generations.links.prev ?? undefined" :disabled="!generations.links.prev" variant="outline" color="neutral" size="sm" icon="caret-left">Newer</Button>
-                    <Button :href="generations.links.next ?? undefined" :disabled="!generations.links.next" variant="outline" color="neutral" size="sm" icon-after="caret-right">Older</Button>
-                </div>
-            </nav>
-        </div>
+        <GenerationFeed v-else data="generations" :generations="generations.data" />
     </AppLayout>
 </template>

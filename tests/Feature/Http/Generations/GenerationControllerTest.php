@@ -42,6 +42,45 @@ class GenerationControllerTest extends TestCase
                 ->where('hasUnfinished', true));
     }
 
+    public function test_scrolling_loads_the_next_page_of_older_generations(): void
+    {
+        $user = User::factory()->create();
+        $oldest = Generation::factory()->for($user)->succeeded()->create(['created_at' => now()->subDay()]);
+        Generation::factory()->for($user)->succeeded()->count(12)->create();
+
+        $firstPage = $this->actingAs($user)->get('/generations');
+
+        $firstPage->assertInertia(fn (Assert $page) => $page->has('generations.data', 12));
+        $this->assertSame(2, $firstPage->viewData('page')['scrollProps']['generations']['nextPage']);
+
+        $secondPage = $this->actingAs($user)->get('/generations?page=2');
+
+        $secondPage->assertInertia(fn (Assert $page) => $page
+            ->has('generations.data', 1)
+            ->where('generations.data.0.id', $oldest->uuid));
+        $this->assertNull($secondPage->viewData('page')['scrollProps']['generations']['nextPage']);
+    }
+
+    public function test_a_live_refresh_puts_the_first_page_back_on_top_matched_by_id(): void
+    {
+        $user = User::factory()->create();
+        Generation::factory()->for($user)->processing()->create();
+        $version = $this->actingAs($user)->get('/generations')->viewData('page')['version'];
+
+        $this->actingAs($user)
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => $version,
+                'X-Inertia-Partial-Component' => 'generations/Index',
+                'X-Inertia-Partial-Data' => 'generations,hasUnfinished',
+                'X-Inertia-Infinite-Scroll-Merge-Intent' => 'prepend',
+            ])
+            ->get('/generations?page=1')
+            ->assertOk()
+            ->assertJsonPath('prependProps', ['generations.data'])
+            ->assertJsonPath('matchPropsOn', ['generations.data.id']);
+    }
+
     public function test_a_failed_generation_is_shown_as_costing_nothing(): void
     {
         $user = User::factory()->create();

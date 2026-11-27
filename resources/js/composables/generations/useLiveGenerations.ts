@@ -11,10 +11,21 @@ import { onBeforeUnmount, onMounted } from 'vue';
  * are lost, so we also catch up whenever the channel subscribes (Pusher does
  * that again after every reconnect) and when the tab comes back into view.
  * Catching up is skipped when everything on the page has already finished.
+ *
+ * With infiniteScroll we reload just page 1 and put it back on top. Cards are
+ * matched by id, so older ones already scrolled in stay put.
  */
-export function useLiveGenerations(hasUnfinished: () => boolean, only: string[]): void {
+export function useLiveGenerations(hasUnfinished: () => boolean, only: string[], infiniteScroll = false): void {
     const props = [...only, 'balance'];
-    const refresh = () => router.reload({ only: props });
+    const refresh = () =>
+        router.reload({
+            only: props,
+            ...(infiniteScroll && {
+                data: { page: 1 },
+                headers: { 'X-Inertia-Infinite-Scroll-Merge-Intent': 'prepend' },
+                preserveUrl: true,
+            }),
+        });
     const catchUp = () => {
         if (hasUnfinished()) {
             refresh();
